@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -23,4 +24,5 @@ def index():
     return "YouTube Transcript API is running."
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))  # берем порт из переменной окружения или 5000 по умолчанию
+    app.run(host="0.0.0.0", port=port)
