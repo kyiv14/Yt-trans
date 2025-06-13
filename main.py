@@ -1,35 +1,26 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
-import re
 
 app = Flask(__name__)
 CORS(app)
 
-def extract_video_id(url):
-    match = re.search(r'(?:v=|youtu\.be/)([\w-]{11})', url)
-    return match.group(1) if match else None
-
-@app.route("/transcript", methods=["POST"])
-def transcript():
+@app.route("/api/transcript", methods=["POST"])
+def get_transcript():
     data = request.get_json()
-    url = data.get("url", "")
-    video_id = extract_video_id(url)
-
-    if not video_id:
-        return jsonify({"error": "Некорректная ссылка на видео."}), 400
+    video_url = data.get("url")
 
     try:
+        video_id = video_url.split("v=")[-1].split("&")[0]
         transcript = YouTubeTranscriptApi.get_transcript(video_id)
         full_text = " ".join([entry["text"] for entry in transcript])
         return jsonify({"text": full_text})
-    except TranscriptsDisabled:
-        return jsonify({"error": "У видео отключены расшифровки."}), 400
-    except NoTranscriptFound:
-        return jsonify({"error": "Нет доступных расшифровок для видео."}), 404
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), 400
+
+@app.route("/", methods=["GET"])
+def index():
+    return "YouTube Transcript API is running."
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
